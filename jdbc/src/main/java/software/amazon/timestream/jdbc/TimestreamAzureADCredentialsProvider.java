@@ -109,7 +109,11 @@ class TimestreamAzureADCredentialsProvider extends TimestreamSAMLCredentialsProv
       .setEntity(new UrlEncodedFormEntity(requestParameters, StandardCharsets.UTF_8))
       .build();
 
-    try (CloseableHttpResponse response = this.httpClient.execute(accessTokenRequest)) {
+    try  {
+      CloseableHttpResponse response = this.httpClient.execute(accessTokenRequest);
+      if (response == null) {
+        throw Error.createSQLException(LOGGER, Error.AAD_ACCESS_TOKEN_REQUEST_FAILED);
+      }
       final StatusLine statusLine = response.getStatusLine();
       if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
         throw Error.createSQLException(LOGGER, Error.AAD_ACCESS_TOKEN_REQUEST_FAILED);
@@ -120,6 +124,7 @@ class TimestreamAzureADCredentialsProvider extends TimestreamSAMLCredentialsProv
       if (jsonNode == null) {
         throw Error.createSQLException(LOGGER, Error.INVALID_AAD_ACCESS_TOKEN_RESPONSE);
       }
+      
       return jsonNode.asText();
     } catch (IOException e) {
       throw Error.createSQLException(LOGGER, e, Error.AAD_ACCESS_TOKEN_ERROR);
