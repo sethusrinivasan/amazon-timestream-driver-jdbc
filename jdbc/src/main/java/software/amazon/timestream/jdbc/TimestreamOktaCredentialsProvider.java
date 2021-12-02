@@ -124,21 +124,22 @@ class TimestreamOktaCredentialsProvider extends TimestreamSAMLCredentialsProvide
         .build();
 
       LOGGER.debug("Fetching Okta session token from: \n" + sessionTokenEndpoint);
-      try {
-        CloseableHttpResponse response = this.httpClient.execute(sessionTokenRequest);
-        final StatusLine statusLine = response.getStatusLine();
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-          throw Error.createSQLException(LOGGER, Error.OKTA_SESSION_TOKEN_REQUEST_FAILED);
-        }
 
-        final HttpEntity responseEntity = response.getEntity();
-        final String responseString = EntityUtils.toString(responseEntity, "UTF-8");
-        final JsonNode jsonNode = OBJECT_MAPPER.readTree(responseString).get("sessionToken");
-        if (jsonNode == null) {
-          throw Error.createSQLException(LOGGER, Error.INVALID_SESSION_TOKEN_RESPONSE);
-        }
-        return jsonNode.asText();
+      CloseableHttpResponse response = this.httpClient.execute(sessionTokenRequest);
+      final StatusLine statusLine = response.getStatusLine();
+      if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+        throw Error.createSQLException(LOGGER, Error.OKTA_SESSION_TOKEN_REQUEST_FAILED);
       }
+
+      final HttpEntity responseEntity = response.getEntity();
+      final String responseString = EntityUtils.toString(responseEntity, "UTF-8");
+      final JsonNode jsonNode = OBJECT_MAPPER.readTree(responseString).get("sessionToken");
+      if (jsonNode == null) {
+        throw Error.createSQLException(LOGGER, Error.INVALID_SESSION_TOKEN_RESPONSE);
+      }
+
+      return jsonNode.asText();
+
     } catch (final IOException e) {
       throw Error.createSQLException(LOGGER, e, Error.OKTA_SESSION_TOKEN_ERROR);
     }
